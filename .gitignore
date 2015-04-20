@@ -1,0 +1,18 @@
+/bin/
+
+# Java files #
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.ear
+
+# Eclipse Core
+.project
+
+# JDT-specific (Eclipse Java Development Tools)
+.classpath
+
+# OSX files #
+.DS_Store
