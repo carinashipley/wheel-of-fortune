@@ -1,7 +1,12 @@
 package gui;
 
 import java.awt.BorderLayout;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.geom.AffineTransform;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
@@ -11,64 +16,70 @@ import java.io.IOException;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 
-public class GameView extends JFrame {
-  private static final long serialVersionUID = 1L;
-  
-  static BufferedImage wheelImg;
+import GameBoard.GameListener;
+import GameBoard.GameUpdateEvent;
+import GameBoard.Wheel;
+import sun.io.Converters;
 
-  JPanel pnlWheel = new JPanel();
+public class GameView extends JFrame implements GameListener {
+  private static final long serialVersionUID = 1L;
+
+  private static BufferedImage wheelImg;
+  private JPanel pnlWheel = new JPanel();
+  private JPanel pnlPhraseSpace = new JPanel();
+  private JLabel lblWheelValue = new JLabel();
+  private JLabel lblPlayer1Score = new JLabel("0");
   
-  public GameView()
-  {
-    this.setLayout(new BorderLayout());    
+  private Wheel wheel = new Wheel();
+
+  public GameView() {
+    this.setLayout(new BorderLayout());
     this.setSize(500, 500);
     this.setTitle("Wheel of Fortune");
-    this.add(setupWheel(), "Center");
-    
-    
-    if (wheelImg == null) {
-      try {
-        wheelImg = ImageIO.read(new File("img/BlackKnight.png"));
-      } catch (IOException e) {
-        wheelImg = new BufferedImage(45, 45, BufferedImage.TYPE_INT_ARGB);
-        wheelImg.getGraphics().drawString("wheel", 0, 0);
+    this.add(wheel, "Center");
+
+    JButton btnSpin = new JButton("Spin");
+    btnSpin.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        try {
+          wheel.spin();
+          lblPlayer1Score.setText(Integer.toString(wheel.getWheelValue()));
+        } catch (InterruptedException e1) {
+          e1.printStackTrace();
+        }
       }
-    }
+    });
+    
+    
+    
+    JPanel pnlSouth = new JPanel();
+    pnlSouth.setLayout(new FlowLayout());
+    
+    pnlSouth.add(btnSpin);
+    pnlSouth.add(lblPlayer1Score);
+    pnlSouth.add(lblWheelValue);
+    
+    this.add(pnlSouth,"South");
+    
+    this.add(lblPlayer1Score,"East");
   }
-  
+
   public void draw(Graphics g, int X, int Y, int width, int height) {
-      g.drawImage(wheelImg, X, Y, width, height, null);
-  }
-  
-  
-
-  private void spinWheel() {
-    
-    
-    // The required drawing location
-    int drawLocationX = 300;
-    int drawLocationY = 300;
-
-    // Rotation information
-
-    double rotationRequired = Math.toRadians(45);
-    // double locationX = image.getWidth() / 2;
-    // double locationY = image.getHeight() / 2;
-    // AffineTransform tx = AffineTransform.getRotateInstance(rotationRequired,
-    // locationX, locationY);
-    // AffineTransformOp op = new AffineTransformOp(tx,
-    // AffineTransformOp.TYPE_BILINEAR);
-
-    // Drawing the rotated image at the required drawing locations
-    // g2d.drawImage(op.filter(image, null), drawLocationX, drawLocationY,
-    // null);
+    g.drawImage(wheelImg, X, Y, width, height, null);
   }
 
   private JPanel setupWheel() {
-JLabel lbl = new JLabel("Wheel of Fortune");
-pnlWheel.add(lbl);
-    
+    JLabel lbl = new JLabel("Wheel of Fortune");
+    pnlWheel.add(lbl);
+
     return pnlWheel;
+  }
+
+  @Override
+  public void GameChanged(GameUpdateEvent e) {
+    lblWheelValue.setText(Integer.toString(e.WheelValue));
+    
   }
 
 }
