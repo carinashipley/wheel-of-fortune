@@ -1,11 +1,16 @@
 package GameBoard;
 
+import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.AffineTransformOp;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -24,74 +29,126 @@ import javax.swing.event.MouseInputListener;
 public class Wheel extends JComponent implements MouseInputListener {
   private static final long serialVersionUID = 1L;
 
+  private BufferedImage OriginalImage;
   private BufferedImage WheelImage;
+  
   private int WheelPosition;
   private int RandomSpinCount;
+  
   private AffineTransform identity = new AffineTransform();
+  private AffineTransform trans = new AffineTransform();
+  
   private Map<Integer, Integer> WheelMap = new HashMap<Integer, Integer>();
   private Set<GameListener> GameListeners = new HashSet<GameListener>();
 
   public Wheel() {
     setWheelValues();
 
-    try {
-      WheelImage = ImageIO.read(new File("img/Wheel2.png"));
-    } catch (IOException ex) {
-      System.out.println(ex);
+    if (OriginalImage == null) {
+      OriginalImage = loadImage();
+    }
+
+    if (WheelImage == null) {
+      WheelImage = loadImage();
     }
   }
 
-  public void paint(Graphics g) {
-    AffineTransform trans = new AffineTransform();
-    trans.setTransform(identity);
-    trans.scale(.5, .5);
+  private BufferedImage loadImage() {
+    BufferedImage img = null;
 
-    Graphics2D g2d = (Graphics2D) g;
-    g2d.drawImage(WheelImage, trans, this);
+    try {
+      img = ImageIO.read(new File("img/Wheel2.png"));
+    } catch (IOException ex) {
+      System.out.println(ex);
+    }
+
+    return img;
   }
+
+  public void paint(Graphics g) {
+    trans.setTransform(identity);
+    // trans.scale(.5, .5);
+
+    Ellipse2D ellipse = new Ellipse2D.Float();
+    ellipse.setFrame(0, 0, 200, 200);
+
+    Rectangle2D rect = new Rectangle2D.Float();
+    rect.setFrame(0, 0, 400, 400);
+
+//    Graphics2D g2d = (Graphics2D) g;
+//    g2d.drawImage(WheelImage, trans, this);
+//    g2d.setClip(rect);
+
+    // g2d.clip(rect);
+
+//     Graphics2D g2d = WheelImage.createGraphics();
+    
+    Graphics2D g2d = (Graphics2D) g;
+     //g2d.drawImage(WheelImage, trans, this);
+    // g2d.fillOval(0, 0, 100, 100);
+
+    //RenderingHints rh = new RenderingHints(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+    //g2d.setRenderingHints(rh);
+
+     //g2d.drawImage(WheelImage, 0, 0, 400, 400, this);
+
+    //g2d.setClip(ellipse);
+    g2d.drawImage(WheelImage, trans, this);
+    
+    g2d.dispose();
+  }
+
+//  public static BufferedImage transformImage(BufferedImage image, AffineTransform transform) throws Exception {
+//
+//    AffineTransformOp op = new AffineTransformOp(transform, AffineTransformOp.TYPE_BICUBIC);
+//
+//    BufferedImage destinationImage = op.createCompatibleDestImage(image,
+//        (image.getType() == BufferedImage.TYPE_BYTE_GRAY) ? image.getColorModel() : null);
+//    Graphics2D g = destinationImage.createGraphics();
+//    g.setBackground(Color.WHITE);
+//    g.clearRect(0, 0, destinationImage.getWidth(), destinationImage.getHeight());
+//    destinationImage = op.filter(image, destinationImage);
+//
+//    return destinationImage;
+//  }
 
   public void spin() throws InterruptedException {
     setRandomSpinCount();
+
     timer.start();
   }
 
-  public BufferedImage getImage() {
-    return WheelImage;
-  }
-
   private void setWheelValues() {
-    WheelMap.put(1, 1000); // red
-    WheelMap.put(2, 3500); // yellow
-    WheelMap.put(3, 1000); // aqua
-    WheelMap.put(4, 1600); // blue
-    WheelMap.put(5, 3000); // pink
+    WheelMap.put(0, 2000); // purple
+    WheelMap.put(1, 1000); // blue
+    WheelMap.put(2, 2750); // yellow
+    WheelMap.put(3, -2); // Lose Turn
+    WheelMap.put(4, 4000); // gold
+    WheelMap.put(5, 0); // bankrupt
     WheelMap.put(6, 1000); // green
-    WheelMap.put(7, 0); // bankrupt
-    WheelMap.put(8, 3750); // yellow
-    WheelMap.put(9, 1200); // green
-    WheelMap.put(10, 1000); // golden rod
-    WheelMap.put(11, 1800); // blue
+    WheelMap.put(7, 2500); // pink
+    WheelMap.put(8, 1400); // blue
+    WheelMap.put(9, 1000); // aqua
+    WheelMap.put(10, 2250); // yellow
+    WheelMap.put(11, 1000); // red
     WheelMap.put(12, 3250); // purple
-    WheelMap.put(13, 1000); // red
-    WheelMap.put(14, 2250); // yellow
-    WheelMap.put(15, 1000); // aqua
-    WheelMap.put(16, 1400); // blue
-    WheelMap.put(17, 2500); // pink
+    WheelMap.put(13, 1800); // blue
+    WheelMap.put(14, 1000); // golden rod
+    WheelMap.put(15, 1200); // green
+    WheelMap.put(16, 3750); // yellow
+    WheelMap.put(17, 0); // bankrupt
     WheelMap.put(18, 1000); // green
-    WheelMap.put(19, 0); // bankrupt
-    WheelMap.put(20, 4000); // gold
-    WheelMap.put(21, -1); // Lose Turn
-    WheelMap.put(22, 2750); // yellow
-    WheelMap.put(23, 1000); // blue
-    WheelMap.put(24, 2000); // purple
+    WheelMap.put(19, 3000); // pink
+    WheelMap.put(20, 1600); // blue
+    WheelMap.put(21, 1000); // aqua
+    WheelMap.put(22, 3500); // yellow
+    WheelMap.put(23, 1000); // red
   }
 
   public int getWheelValue() {
     // 24 pie slices in the wheel
     // 360 / 24 = 15
     // each slice is equal to 15 degrees
-    
-
 
     int mapKey = WheelPosition;
 
@@ -102,8 +159,9 @@ public class Wheel extends JComponent implements MouseInputListener {
   }
 
   private void rotate(double theta) {
+    //System.out.println(WheelImage.getHeight());
     AffineTransform trans = new AffineTransform();
-    trans.rotate(theta, 404, 400);
+    trans.rotate(theta, 200, 200);
 
     AffineTransformOp op = new AffineTransformOp(trans, AffineTransformOp.TYPE_BICUBIC);
     WheelImage = op.filter(WheelImage, null);
@@ -117,23 +175,18 @@ public class Wheel extends JComponent implements MouseInputListener {
       // System.out.println(RandomSpinCount);
       // System.out.println("i: " + i);
 
-      if (i < RandomSpinCount) {
-        // if (i > RandomSpinCount - 4)
-        // rotate(.1);
-        // else if (i > RandomSpinCount - 6)
-        // rotate(.2);
-        // else if (i > RandomSpinCount - 8)
-        // rotate(.3);
-        // else
-        rotate(1.8);
-
+      if (i <= RandomSpinCount) {
+        rotate(Math.PI / 12);
         i++;
-
-        repaint();
+        //repaint();
       } else {
         i = 0;
         timer.stop();
-        RaiseStatusEvent();
+        System.out.println("timer stopped");
+        WheelImage = OriginalImage;
+        double rotation = (Math.PI/12)*WheelPosition;
+        rotate(rotation);
+        // RaiseStatusEvent();
         // RaiseEvent
       }
     }
@@ -141,11 +194,19 @@ public class Wheel extends JComponent implements MouseInputListener {
 
   private void setRandomSpinCount() {
     Random random = new Random();
-    long fraction = (long) (12 * random.nextDouble());
-    RandomSpinCount = (int) fraction + 11;
+    RandomSpinCount = (int) (24 * random.nextDouble());
+    
+    int start = 10;
+    
+    long range = 20 - start + 1;
+    long fraction = (long)(range * random.nextDouble());
+    int randomNumber =  (int)(fraction + start);    
+    RandomSpinCount = randomNumber;
+    
+    System.out.println(randomNumber);
 
-    if ((WheelPosition + RandomSpinCount) > 24) {
-      WheelPosition = RandomSpinCount - (24 - WheelPosition);
+    if ((WheelPosition + RandomSpinCount) > 23) {
+      WheelPosition = RandomSpinCount - (23 - WheelPosition);
     } else {
       WheelPosition += RandomSpinCount;
     }
