@@ -1,10 +1,7 @@
 package GameBoard;
 
-import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.Image;
-import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
@@ -67,50 +64,15 @@ public class Wheel extends JComponent implements MouseInputListener {
 
   public void paint(Graphics g) {
     trans.setTransform(identity);
-    // trans.scale(.5, .5);
 
     Ellipse2D ellipse = new Ellipse2D.Float();
-    ellipse.setFrame(0, 0, 200, 200);
-
-    Rectangle2D rect = new Rectangle2D.Float();
-    rect.setFrame(0, 0, 400, 400);
-
-//    Graphics2D g2d = (Graphics2D) g;
-//    g2d.drawImage(WheelImage, trans, this);
-//    g2d.setClip(rect);
-
-    // g2d.clip(rect);
-
-//     Graphics2D g2d = WheelImage.createGraphics();
+    ellipse.setFrame(90, 0, 220, 220);
     
     Graphics2D g2d = (Graphics2D) g;
-     //g2d.drawImage(WheelImage, trans, this);
-    // g2d.fillOval(0, 0, 100, 100);
-
-    //RenderingHints rh = new RenderingHints(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-    //g2d.setRenderingHints(rh);
-
-     //g2d.drawImage(WheelImage, 0, 0, 400, 400, this);
-
     //g2d.setClip(ellipse);
     g2d.drawImage(WheelImage, trans, this);
-    
     g2d.dispose();
   }
-
-//  public static BufferedImage transformImage(BufferedImage image, AffineTransform transform) throws Exception {
-//
-//    AffineTransformOp op = new AffineTransformOp(transform, AffineTransformOp.TYPE_BICUBIC);
-//
-//    BufferedImage destinationImage = op.createCompatibleDestImage(image,
-//        (image.getType() == BufferedImage.TYPE_BYTE_GRAY) ? image.getColorModel() : null);
-//    Graphics2D g = destinationImage.createGraphics();
-//    g.setBackground(Color.WHITE);
-//    g.clearRect(0, 0, destinationImage.getWidth(), destinationImage.getHeight());
-//    destinationImage = op.filter(image, destinationImage);
-//
-//    return destinationImage;
-//  }
 
   public void spin() throws InterruptedException {
     setRandomSpinCount();
@@ -178,7 +140,6 @@ public class Wheel extends JComponent implements MouseInputListener {
       if (i <= RandomSpinCount) {
         rotate(Math.PI / 12);
         i++;
-        //repaint();
       } else {
         i = 0;
         timer.stop();
