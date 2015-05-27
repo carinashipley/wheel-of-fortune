@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.Random;
 import java.util.Scanner;
 
 public class Game {
@@ -33,7 +34,16 @@ public class Game {
   }
 
   public Phrase getRandomPhrase() {
-    CurrentPhrase = Phrases.get(5);
+    int min = 1;
+    int max = Phrases.size();
+
+    Random rand = new Random();
+    int randomNum = rand.nextInt((max - min) + 1);
+
+    CurrentPhrase = Phrases.get(randomNum);
+
+    System.out.println("CurrentPhrase: " + CurrentPhrase);
+
     return CurrentPhrase;
   }
 
@@ -49,22 +59,14 @@ public class Game {
     return Players.peek();
   }
 
-  public Player getNextPlayer() {
+  public Player moveToNextPlayer() {
     Player currentPlayer = Players.remove();
     Players.add(currentPlayer);
-    Player nextPlayer = Players.peek();
-
-    while (Players.peek() != currentPlayer) {
-      Player p = Players.remove();
-      Players.add(p);
-    }
-    System.out.println("nextPlayer: " + nextPlayer);
-    return nextPlayer;
+    return Players.peek();
   }
 
-  public void moveToNextPlayer() {
-    Player currentPlayer = Players.remove();
-    Players.add(currentPlayer);
+  public boolean solvePuzzle(String answer) {
+    return answer.toLowerCase().equals(CurrentPhrase.Value.toLowerCase());
   }
 
   private void loadPuzzlePhrases() {
@@ -86,15 +88,15 @@ public class Game {
     PlayerList = (LinkedList<Player>) Players;
   }
 
-  public void updatePlayer(int wheelValue, int letterCount) {
-    Player currentPlayer = Players.peek();
-    currentPlayer.updateScore(wheelValue * letterCount);
-  }
+//  public void updatePlayer(int wheelValue, int letterCount) {
+//    Player currentPlayer = Players.peek();
+//    currentPlayer.updateScore(wheelValue * letterCount);
+//  }
 
-  public void buyVowel() {
-    Player currentPlayer = Players.peek();
-    currentPlayer.buyVowel();
-  }
+//  public boolean buyVowel() {
+//    Player currentPlayer = Players.peek();
+//    return currentPlayer.buyVowel();
+//  }
 
   private Scanner readFile(String filename) {
     Scanner in = null;

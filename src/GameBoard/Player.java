@@ -5,28 +5,32 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class Player {
   static AtomicInteger nextId = new AtomicInteger();
-  private int PlayerId;
-  public String Name;
-  public int Score;
-  // public JLabel ScoreLabel;
-  // public JPanel ScorePanel;
 
-  private String ScoreDisplay;
+  private int _playerId;
+  private String _name;
+  private int _score;
 
   public Player(String name) {
-    this.PlayerId = nextId.incrementAndGet();
-    this.Name = name;
-    this.Score = 0;
-    this.ScoreDisplay = "$0";
+    _playerId = nextId.incrementAndGet();
+    _name = name;
+    _score = 0;
   }
 
-  public String getScore() {
-    return ScoreDisplay;
+  public int getPlayerId() {
+    return _playerId;
   }
-  
-  public int getPlayerId()
-  {
-    return PlayerId;
+
+  public String getName() {
+    return _name;
+  }
+
+  public String getFormattedScore() {
+    DecimalFormat myFormatter = new DecimalFormat("$###,###");
+    return myFormatter.format(_score);
+  }
+
+  public int getScore() {
+    return _score;
   }
 
   public void updateScore(String strScore) {
@@ -36,23 +40,23 @@ public class Player {
 
   public void updateScore(int score) {
     if (score == 0)
-      Score = 0; // Bankrupt
+      _score = 0; // Bankrupt
     else
-      Score += score;
-
-    DecimalFormat myFormatter = new DecimalFormat("$###,###");
-    ScoreDisplay = myFormatter.format(Score);
-    // ScoreLabel.setText(myFormatter.format(Score));
+      _score += score;
   }
 
-  public void buyVowel() {
-    if (Score >= 250) {
-      Score -= 250;
+  public boolean buyVowel() {
+    System.out.println("Player.buyVowel() - Score: " + _score);
+    boolean hasEnoughMoney = false;
+    if (_score >= 250) {
+      _score -= 250;
+      hasEnoughMoney = true;
     }
+    return hasEnoughMoney;
   }
 
   @Override
   public String toString() {
-    return Name + ": " + ScoreDisplay;
+    return _name + ": " + getScore();
   }
 }

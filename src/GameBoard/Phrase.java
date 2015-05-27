@@ -104,24 +104,25 @@ public class Phrase {
     return count;
   }
   
-  public String getPuzzleValue()
-  {
-    StringBuilder str = new StringBuilder();
-    
-    for(Word w : WordList)
-    {
-      for(Letter l: w.LetterList)
-      {
-        if(l.IsVisible)
-          str.append(l.Value);
-        else
-          str.append("_");
-      }
-      str.append(" ");
-    }
-    
-    return str.toString();
-  }
+//  public String getPuzzleValue()
+//  {
+//    System.out.println("Phrase.getPuzzleValue()");
+//    StringBuilder str = new StringBuilder();
+//    
+//    for(Word w : WordList)
+//    {
+//      for(Letter l: w.LetterList)
+//      {
+//        if(l.IsVisible)
+//          str.append(l.Value);
+//        else
+//          str.append("_");
+//      }
+//      str.append(" ");
+//    }
+//    
+//    return str.toString();
+//  }
 
   @Override
   public String toString() {
