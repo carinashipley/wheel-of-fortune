@@ -1,5 +1,5 @@
 package GameBoard;
 
 public interface GameListener {
-public void GameChanged(GameUpdateEvent e);
+  public void GameChanged(GameUpdateEvent e);
 }

@@ -12,7 +12,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.util.ArrayList;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,6 +24,7 @@ import javax.swing.*;
 
 import GameBoard.Game;
 import GameBoard.GameListener;
+import GameBoard.GameSounds;
 import GameBoard.GameUpdateEvent;
 import GameBoard.Letter;
 import GameBoard.Phrase;
@@ -41,20 +42,17 @@ public class GameView extends JFrame implements GameListener {
   private Set<Character> nonLettersSet = new HashSet<Character>();
 
   private Map<String, Boolean> LettersMap = new HashMap<String, Boolean>();
-  private Map<Integer, PlayerPodium> Podiums = new HashMap<Integer, PlayerPodium>();
+  private Map<Integer, PlayerPodium> Podiums;
   private Map<String, LetterButton> ConsonantButtons = new HashMap<String, LetterButton>();
   private Map<String, LetterButton> VowelButtons = new HashMap<String, LetterButton>();
 
-  private JPanel pnlPuzzle = new JPanel();
   private JPanel pnlPuzzleRow1 = new JPanel();
   private JPanel pnlPuzzleRow2 = new JPanel();
   private JPanel pnlPuzzleRow3 = new JPanel();
-  private JPanel pnlPlayer1 = new JPanel();
-  private JPanel pnlPlayer2 = new JPanel();
+  private JPanel pnlPuzzleRow4 = new JPanel();
+  private JPanel pnlLetters = new JPanel();
 
   private JLabel lblWheelValue = new JLabel();
-  private JLabel lblPlayer1Score = new JLabel("$0");
-  private JLabel lblPlayer2Score = new JLabel("$0");
   private JLabel lblGameStatus = new JLabel();
   private JLabel lblCategory = new JLabel();
 
@@ -71,76 +69,48 @@ public class GameView extends JFrame implements GameListener {
 
   public GameView() {
     this.setLayout(new BorderLayout());
-    this.setSize(700, 500);
+    this.setSize(775, 595);
     this.setTitle("Wheel of Fortune");
     this.setLocation(50, 50);
 
+    wheel.AddStatusListener(this);
+
     BufferedImage img = null;
     try {
-      File f = new File("img/background_1.jpg");
+      File f = new File("img/wof_wallpaper_2_1024.jpg");
       img = ImageIO.read(f);
-      System.out.println("File " + f.toString());
     } catch (Exception e) {
       System.out.println("Cannot read file: " + e);
     }
 
-    BackgroundPanel background = new BackgroundPanel(img, BackgroundPanel.ACTUAL, 0.50f, 0.5f);
+    BackgroundPanel background = new BackgroundPanel(img, BackgroundPanel.ACTUAL, 0.6f, 0.45f);
     this.setContentPane(background);
+    this.setJMenuBar(getGameMenuBar());
 
-    JMenuBar menuBar = new JMenuBar();
-    JMenu menu = new JMenu("Menu");
-    menuBar.add(menu);
-    JMenuItem item = new JMenuItem("Exit");
-    item.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        System.exit(0);
-      }
-    });
-    menu.add(item);
-    // this.setJMenuBar(menuBar);
-
-    MyGame = new Game();
-    MyGame.start();
-
-    doInitialGameState();
-
-    Phrase phrase = MyGame.getRandomPhrase();
+    doNewGame();
 
     lblCategory.setHorizontalAlignment(JLabel.CENTER);
-    // lblCategory.setBackground(Color.WHITE);
     lblCategory.setOpaque(false);
-    // lblCategory.setPreferredSize(new Dimension(50,50));
-    lblCategory.setText("<html><div style='background-color:white;text-align:center;border:solid 2px black;padding:0 10px;'><h2>"
-        + phrase.Category.toUpperCase() + "</h2></div></html>");
-
-    updatePuzzle();
-
-    pnlPuzzleRow1.setOpaque(false);
-    pnlPuzzleRow2.setOpaque(false);
-    pnlPuzzleRow3.setOpaque(false);
-
-    pnlPuzzle.setLayout(new GridLayout(3, 1));
-    pnlPuzzle.setOpaque(false);
-    pnlPuzzle.add(pnlPuzzleRow1);
-    pnlPuzzle.add(pnlPuzzleRow2);
-    pnlPuzzle.add(pnlPuzzleRow3);
+    lblCategory.setBorder(BorderFactory.createEmptyBorder(4, 0, 1, 0));
 
     JPanel pnlTop = new JPanel();
     pnlTop.setOpaque(false);
     pnlTop.setLayout(new BorderLayout());
     pnlTop.add(lblCategory, "North");
-    pnlTop.add(pnlPuzzle, "Center");
+    pnlTop.add(getPuzzlePanel(), "Center");
     pnlTop.add(getLettersPanel(), "South");
     this.add(pnlTop, "North");
 
+    lblGameStatus.setPreferredSize(new Dimension(200, 60));
     lblGameStatus.setHorizontalAlignment(JLabel.CENTER);
 
     JPanel pnlCenter = new JPanel();
     pnlCenter.setOpaque(false);
     pnlCenter.setLayout(new BorderLayout());
     pnlCenter.add(lblGameStatus, "North");
+
     pnlCenter.add(wheel, "Center");
+
     this.add(pnlCenter, "Center");
 
     btnSpin.addActionListener(new ActionListener() {
@@ -149,7 +119,6 @@ public class GameView extends JFrame implements GameListener {
         try {
           wheel.spin();
           WheelValue = wheel.getWheelValue();
-          updateGame();
         } catch (InterruptedException e1) {
           e1.printStackTrace();
         }
@@ -169,61 +138,146 @@ public class GameView extends JFrame implements GameListener {
         String answer = JOptionPane.showInputDialog(null, "Type your answer:", null);
         if (answer != null) {
           boolean isSolved = MyGame.solvePuzzle(answer);
-          if (isSolved)
-            showSolvedPuzzle();
-          else
+          if (isSolved) {
+            updatePuzzle();
+          } else
             moveToNextPlayer("Incorrect guess. ", false);
         }
       }
     });
 
-    JPanel pnlSouth = new JPanel();
-    pnlSouth.setOpaque(false);
-    pnlSouth.setLayout(new FlowLayout());
+    this.add(getSouthPanel(), "South");
+    this.add(getEastPanel(), "East");
+  }
 
-    pnlSouth.add(btnSpin);
-    pnlSouth.add(btnBuyVowel);
-    pnlSouth.add(btnSolve);
-    pnlSouth.add(lblWheelValue);
+  private JPanel getSouthPanel() {
+    JPanel pnl = new JPanel();
+    pnl.setOpaque(false);
+    pnl.setLayout(new FlowLayout());
 
-    this.add(pnlSouth, "South");
+    btnSpin.setPreferredSize(new Dimension(90, 40));
+    btnSpin.setBackground(Color.GREEN);
+    btnSpin.setFont(new Font("Tahoma", Font.BOLD, 20));
+    btnSpin.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-    this.add(getPlayersPanel(), "East");
+    btnBuyVowel.setCursor(new Cursor(Cursor.HAND_CURSOR));
+    btnSolve.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+    pnl.add(btnSpin);
+    pnl.add(btnBuyVowel);
+    pnl.add(btnSolve);
+
+    return pnl;
+  }
+
+  private JPanel getPuzzlePanel() {
+    JPanel pnlPuzzle = new JPanel();
+
+    pnlPuzzleRow1.setOpaque(false);
+    pnlPuzzleRow2.setOpaque(false);
+    pnlPuzzleRow3.setOpaque(false);
+    pnlPuzzleRow4.setOpaque(false);
+
+    pnlPuzzle.setLayout(new GridLayout(4, 1));
+    pnlPuzzle.setOpaque(false);
+
+    pnlPuzzle.add(pnlPuzzleRow1);
+    pnlPuzzle.add(pnlPuzzleRow2);
+    pnlPuzzle.add(pnlPuzzleRow3);
+    pnlPuzzle.add(pnlPuzzleRow4);
+
+    return pnlPuzzle;
   }
 
   private void updateGame() {
-    System.out.println("updateGame() wheelValue: " + WheelValue);
     if (WheelValue == -2) {
       // Lose a Turn
       moveToNextPlayer("Oh no! You lost your turn.", false);
+      updateWheelValue("Lose a Turn");
     } else if (WheelValue == 0) {
       // Bankrupt
-      System.out.println("Bankrupt - WheelValue: " + WheelValue + ", LetterCount: " + LetterCount);
       moveToNextPlayer("Bankrupt! Sorry, " + CurrentPlayerName + ", you lose all your money.", true);
+      updateWheelValue("Bankrupt");
     } else {
       Player currentPlayer = MyGame.getCurrentPlayer();
-      lblWheelValue.setText(Integer.toString(wheel.getWheelValue()));
-      updateGameStatusText(currentPlayer.getName() + " needs to select a letter.");
+      updateWheelValue(wheel.getWheelValue());
+      updateGameStatusText("<b>" + currentPlayer.getName() + "</b> needs to select a letter.");
       doAfterSpinState();
     }
+  }
+
+  private JMenuBar getGameMenuBar() {
+    JMenuBar menuBar = new JMenuBar();
+    JMenu menu = new JMenu("Game");
+    menuBar.add(menu);
+    JMenuItem item = new JMenuItem("New Game");
+    item.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        doNewGame();
+      }
+    });
+    menu.add(item);
+    item = new JMenuItem("Exit");
+    item.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        System.exit(0);
+      }
+    });
+    menu.add(item);
+
+    return menuBar;
   }
 
   private void doInitialGameState() {
     btnSpin.setEnabled(true);
     btnBuyVowel.setEnabled(false);
+    btnSolve.setEnabled(true);
     IsLetterClickable = false;
+    IsPuzzleSolved = false;
     updateGameStatusText("Welcome to Wheel of Fortune. Spin to begin.");
+    updateWheelValue("");
 
     for (char c : nonLetters)
       nonLettersSet.add(c);
   }
 
+  private void doNewGame() {
+    if (MyGame == null)
+      MyGame = new Game();
+    MyGame.start();
+
+    doInitialGameState();
+
+    resetLetterButtons();
+
+    Phrase phrase = MyGame.getRandomPhrase();
+    lblCategory.setText("<html><div style='background-color:white;text-align:center;border:solid 2px black;padding:0 10px;'><h2>"
+        + phrase.Category.toUpperCase() + "</h2></div></html>");
+
+    CurrentPlayerName = MyGame.getCurrentPlayer().getName();
+
+    if (Podiums != null) {
+      for (Player p : MyGame.getPlayers()) {
+        updatePodium(p);
+        if (CurrentPlayerName == p.getName()) 
+          Podiums.get(p.getPlayerId()).setBackground(Color.YELLOW);
+        else
+          Podiums.get(p.getPlayerId()).setBackground(Color.WHITE);
+      }
+    }
+
+    updatePuzzle();
+    repaint();
+  }
+
   private void doNewTurnState() {
-    System.out.println("doNewTurnState()");
     btnSpin.setEnabled(true);
     IsLetterClickable = false;
     setBuyVowelBtn();
     setLetterBtns();
+    setVowelBtns();
   }
 
   private void doSameTurnState() {
@@ -231,6 +285,7 @@ public class GameView extends JFrame implements GameListener {
     IsLetterClickable = false;
     setBuyVowelBtn();
     setLetterBtns();
+    setVowelBtns();
   }
 
   private void doAfterSpinState() {
@@ -241,13 +296,10 @@ public class GameView extends JFrame implements GameListener {
   }
 
   private void doBuyVowelState() {
-    for (String vowel : VowelButtons.keySet()) {
-      LetterButton lb = VowelButtons.get(vowel);
-      if (lb.IsUsed)
-        lb.Button.setEnabled(false);
-      else
-        lb.Button.setEnabled(true);
-    }
+    btnSpin.setEnabled(false);
+    IsLetterClickable = true;
+    btnBuyVowel.setEnabled(false);
+    setVowelBtns();
   }
 
   private void setBuyVowelBtn() {
@@ -255,31 +307,56 @@ public class GameView extends JFrame implements GameListener {
     btnBuyVowel.setEnabled(currentPlayer.getScore() >= 250);
   }
 
-  private void setLetterBtns() {
-    for (String letter : ConsonantButtons.keySet()) {
-      LetterButton lb = ConsonantButtons.get(letter);
-      if (lb.IsUsed)
+  private void resetLetterButtons() {
+    for (String vowel : VowelButtons.keySet())
+      resetLetterButton(VowelButtons.get(vowel));
+
+    for (String letter : ConsonantButtons.keySet())
+      resetLetterButton(ConsonantButtons.get(letter));
+  }
+
+  private void resetLetterButton(LetterButton btn) {
+    btn.IsUsed = false;
+    btn.Button.setVisible(true);
+  }
+
+  private void setVowelBtns() {
+    if (IsLetterClickable)
+      pnlLetters.setBackground(Color.YELLOW);
+    else
+      pnlLetters.setBackground(Color.LIGHT_GRAY);
+
+    for (String vowel : VowelButtons.keySet()) {
+      LetterButton lb = VowelButtons.get(vowel);
+      if (lb.IsUsed) {
         lb.Button.setEnabled(false);
-      else
+        lb.Button.setVisible(false);
+      } else
         lb.Button.setEnabled(IsLetterClickable);
     }
   }
 
-  private void updateVowelButtons(boolean isVowelClickable) {
-    for (String vowel : VowelButtons.keySet()) {
-      LetterButton lb = VowelButtons.get(vowel);
-      if (lb.IsUsed)
+  private void setLetterBtns() {
+    if (IsLetterClickable)
+      pnlLetters.setBackground(Color.YELLOW);
+    else
+      pnlLetters.setBackground(Color.LIGHT_GRAY);
+
+    for (String letter : ConsonantButtons.keySet()) {
+      LetterButton lb = ConsonantButtons.get(letter);
+      if (lb.IsUsed) {
         lb.Button.setEnabled(false);
-      else
-        lb.Button.setEnabled(isVowelClickable);
+        lb.Button.setVisible(false);
+      } else
+        lb.Button.setEnabled(IsLetterClickable);
     }
   }
 
   private void updateGameStatusText(String message) {
     StringBuilder str = new StringBuilder();
-    str.append("<html><h2 style='color:white'>");
+    str.append("<html><p style='color:white;padding:0 10px;font-size:16px;'>");
     str.append(message);
-    str.append("</h2></html>");
+    str.append("</p></html>");
     lblGameStatus.setText(str.toString());
   }
 
@@ -292,56 +369,82 @@ public class GameView extends JFrame implements GameListener {
 
     // update current player's podium
     PlayerPodium currentPodium = Podiums.get(currentPlayer.getPlayerId());
-    currentPodium.PodiumPanel.setBackground(Color.WHITE);
+    currentPodium.setBackground(Color.WHITE);
 
     // move to next player and make him/her the current player
     Player nextPlayer = MyGame.moveToNextPlayer();
     CurrentPlayerName = nextPlayer.getName();
 
     PlayerPodium nextPodium = Podiums.get(nextPlayer.getPlayerId());
-    updateGameStatusText(message + " " + "It is " + CurrentPlayerName + "'s turn.");
-    nextPodium.PodiumPanel.setBackground(Color.YELLOW);
+    updateGameStatusText(message + " " + "It is <b>" + CurrentPlayerName + "</b>'s turn.");
+    nextPodium.setBackground(Color.YELLOW);
 
     doNewTurnState();
+  }
+
+  private JPanel getEastPanel() {
+    JPanel pnl = new JPanel();
+    pnl.setOpaque(false);
+    pnl.setLayout(new GridLayout(2, 1));
+    pnl.add(getPlayersPanel());
+    pnl.add(lblWheelValue);
+    return pnl;
+  }
+
+  private void updateWheelValue(Integer value) {
+    DecimalFormat myFormatter = new DecimalFormat("$###,###");
+    updateWheelValue(myFormatter.format(value));
+  }
+
+  private void updateWheelValue(String value) {
+    StringBuilder str = new StringBuilder();
+    str.append("<html>");
+    str.append("<h2 style='border: 2px solid #ffffff;padding: 5px 20px;background-color:#c0830b;background-image:(/img/score_bkg.jpg)'>");
+    str.append(value);
+    str.append("</h2>");
+    str.append("</html>");
+
+    lblWheelValue.setText(str.toString());
   }
 
   private JPanel getPlayersPanel() {
     JPanel pnl = new JPanel();
 
     pnl.setLayout(new FlowLayout());
+    pnl.setOpaque(false);
 
     List<Player> players = MyGame.getPlayers();
-    Player p1 = players.get(0);
-    CurrentPlayerName = p1.getName();
-    JPanel player1 = getPlayerPanel(p1, lblPlayer1Score, pnlPlayer1);
-    JPanel player2 = getPlayerPanel(players.get(1), lblPlayer2Score, pnlPlayer2);
 
-    player1.setBackground(Color.YELLOW);
+    JPanel pnlPlayer;
+    for (int i = 0; i < players.size(); i++) {
+      Player p = players.get(i);
+      pnlPlayer = getPlayerPanel(p);
 
-    pnl.add(player1);
-    pnl.add(player2);
+      if (i == 0) {
+        CurrentPlayerName = p.getName();
+        pnlPlayer.setBackground(Color.YELLOW);
+      } else {
+        pnlPlayer.setBackground(Color.WHITE);
+      }
 
-    return pnl;
-  }
-
-  private JPanel getPlayerPanel(Player player, JLabel lbl, JPanel pnl) {
-    pnl.add(getPlayerLabel(player.getName()));
-    pnl.add(lbl);
-    pnl.setBorder(BorderFactory.createBevelBorder(1));
-    pnl.setBackground(Color.WHITE);
-
-    Podiums.put(player.getPlayerId(), new PlayerPodium(lbl, pnl));
+      pnl.add(pnlPlayer);
+    }
 
     return pnl;
   }
 
-  private JLabel getPlayerLabel(String name) {
-    JLabel lbl = new JLabel(name);
-    return lbl;
+  private JPanel getPlayerPanel(Player player) {
+    PlayerPodium pod = new PlayerPodium(player.getName());
+
+    if (Podiums == null)
+      Podiums = new HashMap<Integer, PlayerPodium>();
+
+    Podiums.put(player.getPlayerId(), pod);
+
+    return pod;
   }
 
   private JPanel getLettersPanel() {
-    JPanel pnlLetters = new JPanel();
     pnlLetters.setLayout(new GridLayout(1, 26));
     pnlLetters.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
@@ -385,7 +488,7 @@ public class GameView extends JFrame implements GameListener {
     LettersMap.put(letter, true);
 
     btn.setMaximumSize(new Dimension(8, 10));
-    btn.setFont(btn.getFont().deriveFont(18.0f));
+    btn.setFont(btn.getFont().deriveFont(19.0f));
     btn.setBorder(BorderFactory.createEmptyBorder());
     btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
     btn.setEnabled(false);
@@ -410,23 +513,26 @@ public class GameView extends JFrame implements GameListener {
     return new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        JButton btn = (JButton) e.getSource();
-        String vowel = btn.getText();
-        VowelButtons.get(vowel).IsUsed = true;
+        if (IsLetterClickable) {
+          JButton btn = (JButton) e.getSource();
+          String vowel = btn.getText();
+          VowelButtons.get(vowel).IsUsed = true;
 
-        LettersMap.put(vowel, false);
+          LettersMap.put(vowel, false);
 
-        LetterCount = MyGame.updatePhrase(vowel);
-        updatePuzzle();
+          LetterCount = MyGame.updatePhrase(vowel);
+          updatePuzzle();
 
-        updateVowelButtons(false);
-
-        if (LetterCount == 0) {
-          moveToNextPlayer("Sorry, no " + btn.getText() + ".", false);
-          doNewTurnState();
-        } else {
-          updateGameStatusText(CurrentPlayerName + " needs to go again.");
-          doSameTurnState();
+          if (!IsPuzzleSolved) {
+            if (LetterCount == 0) {
+              moveToNextPlayer("Sorry, no " + btn.getText() + ".", false);
+              doNewTurnState();
+            } else {
+              GameSounds.playLetterTurn();
+              updateGameStatusText(CurrentPlayerName + " needs to go again.");
+              doSameTurnState();
+            }
+          }
         }
       }
     };
@@ -446,28 +552,40 @@ public class GameView extends JFrame implements GameListener {
           LetterCount = MyGame.updatePhrase(letter);
           updatePuzzle();
 
-          if (LetterCount == 0) {
-            moveToNextPlayer("No " + btn.getText() + ".", false);
-            doNewTurnState();
-          } else {
-            updateScore();
-            updateGameStatusText(CurrentPlayerName + " needs to spin again.");
-            doSameTurnState();
+          if (!IsPuzzleSolved) {
+            if (LetterCount == 0) {
+              moveToNextPlayer("No " + btn.getText() + ".", false);
+              doNewTurnState();
+            } else {
+              updateScore();
+              GameSounds.playLetterTurn();
+              String isAre = LetterCount == 1 ? "is" : "are";
+              String theS = LetterCount == 1 ? "" : "s";
+              updateGameStatusText("There " + isAre + " " + getNumberWord(LetterCount) + " " + letter + theS + ". <b>"
+                  + CurrentPlayerName + "</b> needs to spin again.");
+              doSameTurnState();
+            }
           }
-
-          System.out.println(btn.getText() + " was clicked");
-          // System.out.println(lettersMap.toString());
-        } else {
-          System.out.println("need to spin before picking a letter");
         }
       }
     };
   }
 
-  private void buyVowel() {
-    System.out.println("buyVowel()");
+  private String getNumberWord(Integer number) {
+    switch (number) {
+    case 1:
+      return "one";
+    case 2:
+      return "two";
+    case 3:
+      return "three";
+    default:
+      return number.toString();
+    }
+  }
 
-    int answer = JOptionPane.showConfirmDialog(null, "Would you like to buy a vowel for $250?", "Buy a vowel?",
+  private void buyVowel() {
+    int answer = JOptionPane.showConfirmDialog(this, "Would you like to buy a vowel for $250?", "Buy a vowel?",
         JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
 
     // 1 is no and 0 is yes - weird
@@ -484,48 +602,42 @@ public class GameView extends JFrame implements GameListener {
   }
 
   private void updateScore() {
-    System.out.println("updateScore()");
     Player currentPlayer = MyGame.getCurrentPlayer();
     currentPlayer.updateScore(WheelValue * LetterCount);
-    Podiums.get(currentPlayer.getPlayerId()).ScoreLabel.setText(currentPlayer.getFormattedScore());
+    updatePodium(currentPlayer);
   }
 
   private void updatePodium() {
     Player currentPlayer = MyGame.getCurrentPlayer();
-    Podiums.get(currentPlayer.getPlayerId()).ScoreLabel.setText(currentPlayer.getFormattedScore());
+    updatePodium(currentPlayer);
+  }
+
+  private void updatePodium(Player currentPlayer) {
+    Podiums.get(currentPlayer.getPlayerId()).update(currentPlayer.getFormattedScore());
   }
 
   private void updatePuzzle() {
+    Phrase phrase = MyGame.getCurrentPhrase();
+
+    if (phrase.isPuzzleSolved() || MyGame.isPuzzleSolved()) {
+      showSolvedPuzzle();
+    }
+
     pnlPuzzleRow1.removeAll();
     pnlPuzzleRow2.removeAll();
     pnlPuzzleRow3.removeAll();
-
-    Phrase phrase = MyGame.getCurrentPhrase();
-
-    pnlPuzzleRow1.add(getSpaceBox());
-    pnlPuzzleRow2.add(getSpaceBox());
-
-    if (phrase.WordCount >= 3)
-      pnlPuzzleRow3.add(getSpaceBox());
+    pnlPuzzleRow4.removeAll();
 
     int wordNum = 0;
     for (Word word : phrase.WordList) {
       wordNum++;
-      if (phrase.WordCount <= 3)
+      if (phrase.WordCount <= 4)
         addWordToRow(word, wordNum, 1, phrase.WordCount);
-      else if (phrase.WordCount <= 6)
+      else if (phrase.WordCount <= 8)
         addWordToRow(word, wordNum, 2, phrase.WordCount);
       else
         addWordToRow(word, wordNum, 3, phrase.WordCount);
     }
-
-    pnlPuzzleRow1.add(getSpaceBox());
-
-    if (phrase.WordCount >= 2)
-      pnlPuzzleRow2.add(getSpaceBox());
-
-    if (phrase.WordCount >= 3)
-      pnlPuzzleRow3.add(getSpaceBox());
   }
 
   private void addWordToRow(Word word, int wordNum, int wordsPerRow, int wordCount) {
@@ -539,18 +651,26 @@ public class GameView extends JFrame implements GameListener {
 
       if (wordNum < wordsPerRow * 2)
         pnlPuzzleRow2.add(getSpaceBox());
-    } else {
+    } else if (wordNum <= wordsPerRow * 3) {
       putLettersInRow(pnlPuzzleRow3, word);
 
-      if (wordNum < wordCount)
+      if (wordNum < wordsPerRow * 3)
         pnlPuzzleRow3.add(getSpaceBox());
+    } else {
+      putLettersInRow(pnlPuzzleRow4, word);
+
+      if (wordNum < wordCount)
+        pnlPuzzleRow4.add(getSpaceBox());
     }
   }
 
   private void showSolvedPuzzle() {
+    GameSounds.playChant();
     updateGameStatusText(CurrentPlayerName + ", you win!");
     IsPuzzleSolved = true;
-    updatePuzzle();
+    btnSpin.setEnabled(false);
+    btnBuyVowel.setEnabled(false);
+    btnSolve.setEnabled(false);
   }
 
   private void putLettersInRow(JPanel pnl, Word word) {
@@ -586,13 +706,12 @@ public class GameView extends JFrame implements GameListener {
     lbl.setBorder(BorderFactory.createLineBorder(color));
     lbl.setPreferredSize(new Dimension(30, 35));
     lbl.setHorizontalAlignment(JLabel.CENTER);
-    lbl.setFont(new Font("Tahoma", Font.BOLD, 20));
+    lbl.setFont(new Font("Verdana", Font.BOLD, 20));
     return lbl;
   }
 
   @Override
   public void GameChanged(GameUpdateEvent e) {
-    lblWheelValue.setText(Integer.toString(e.WheelValue));
+    updateGame();
   }
-
 }

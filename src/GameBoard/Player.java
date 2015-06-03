@@ -46,7 +46,6 @@ public class Player {
   }
 
   public boolean buyVowel() {
-    System.out.println("Player.buyVowel() - Score: " + _score);
     boolean hasEnoughMoney = false;
     if (_score >= 250) {
       _score -= 250;
