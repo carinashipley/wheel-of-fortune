@@ -9,7 +9,7 @@ public class frm_main {
 
     GameView view = new GameView();
 
-     view.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    view.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     view.setVisible(true);
   }
 

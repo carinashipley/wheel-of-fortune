@@ -35,7 +35,7 @@ import GameBoard.Word;
 public class GameView extends JFrame implements GameListener {
   private static final long serialVersionUID = 1L;
   private static BufferedImage wheelImg;
-  private final char[] nonLetters = { '’', '\'', '&', '-', '.' };
+  private final char[] nonLetters = { '\'', '&', '-', '.' };
 
   private Game MyGame;
 
@@ -492,6 +492,7 @@ public class GameView extends JFrame implements GameListener {
     btn.setBorder(BorderFactory.createEmptyBorder());
     btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
     btn.setEnabled(false);
+    btn.setOpaque(false);
 
     if (isVowel) {
       btn.setForeground(Color.BLUE);
